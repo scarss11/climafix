@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Clientes — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Clientes</div>
+  <button class="btn btn-primary" onclick="openModal('modal-crear')">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    Nuevo cliente
+  </button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Dirección</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+        <tr>
+          <td style="color:var(--text2);font-weight:600">#{{ c.id }}</td>
+          <td style="font-weight:600">{{ c.nombre }}</td>
+          <td style="color:var(--text2)">{{ c.email or '—' }}</td>
+          <td>{{ c.telefono or '—' }}</td>
+          <td style="color:var(--text2)">{{ c.direccion or '—' }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm"
+                onclick="openEdit({{ c.id }},'{{ c.nombre|e }}','{{ c.telefono or ''|e }}','{{ c.direccion or ''|e }}')">
+                Editar
+              </button>
+              <form method="POST" action="/admin/clientes/{{ c.id }}/eliminar" onsubmit="return confirm('¿Eliminar cliente?')">
+                <button class="btn btn-danger btn-sm">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">Sin clientes registrados</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal-overlay" id="modal-crear">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nuevo cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-crear')">✕</button>
+    </div>
+    <form method="POST" action="/admin/clientes/crear">
+      <div class="form-group"><label>Nombre</label><input name="nombre" required></div>
+      <div class="form-group"><label>Teléfono</label><input name="telefono"></div>
+      <div class="form-group"><label>Dirección</label><textarea name="direccion"></textarea></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Editar cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-editar')">✕</button>
+    </div>
+    <form method="POST" id="form-editar">
+      <div class="form-group"><label>Nombre</label><input name="nombre" id="edit-nombre" required></div>
+      <div class="form-group"><label>Teléfono</label><input name="telefono" id="edit-telefono"></div>
+      <div class="form-group"><label>Dirección</label><textarea name="direccion" id="edit-direccion"></textarea></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Actualizar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function openEdit(id, nombre, tel, dir){
+  document.getElementById('form-editar').action = '/admin/clientes/'+id+'/editar';
+  document.getElementById('edit-nombre').value = nombre;
+  document.getElementById('edit-telefono').value = tel;
+  document.getElementById('edit-direccion').value = dir;
+  openModal('modal-editar');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }));
+</script>
+{% endblock %}

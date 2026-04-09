@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <p style="color:var(--text2);font-size:14px;margin-top:4px">Resumen general de operaciones</p>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--orange)">{{ stats.get('pendiente',0) }}</div>
+    <div class="stat-label">Órdenes Pendientes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--blue)">{{ stats.get('en_proceso',0) }}</div>
+    <div class="stat-label">En Proceso</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--green)">{{ stats.get('completada',0) }}</div>
+    <div class="stat-label">Completadas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--blue)">{{ clientes|length }}</div>
+    <div class="stat-label">Clientes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--purple)">{{ tecnicos|length }}</div>
+    <div class="stat-label">Técnicos</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--green)">{{ cotizaciones|length }}</div>
+    <div class="stat-label">Cotizaciones</div>
+  </div>
+</div>
+
+<!-- Últimas órdenes -->
+<div class="card" style="margin-bottom:24px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="font-size:17px;font-weight:700">Últimas Órdenes</div>
+    <a href="/admin/ordenes" class="btn btn-ghost btn-sm">Ver todas</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Cliente</th><th>Técnico</th><th>Equipo</th><th>Estado</th><th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in ordenes[:8] %}
+        <tr>
+          <td style="font-weight:600;color:var(--text2)">#{{ o.id }}</td>
+          <td>{{ o.cliente_nombre or '—' }}</td>
+          <td>{{ o.tecnico_nombre or 'Sin asignar' }}</td>
+          <td>{{ o.equipo_tipo or '—' }} {{ o.equipo_marca or '' }}</td>
+          <td><span class="badge badge-{{ o.estado }}">{{ o.estado.replace('_',' ')|title }}</span></td>
+          <td style="color:var(--text2)">{{ o.fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">Sin órdenes registradas</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Cotizaciones recientes -->
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="font-size:17px;font-weight:700">Cotizaciones Recientes</div>
+    <a href="/admin/cotizaciones" class="btn btn-ghost btn-sm">Ver todas</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th></tr>
+      </thead>
+      <tbody>
+        {% for c in cotizaciones[:5] %}
+        <tr>
+          <td style="font-weight:600;color:var(--text2)">#{{ c.id }}</td>
+          <td>{{ c.cliente_nombre or '—' }}</td>
+          <td style="font-weight:600">${{ '{:,.0f}'.format(c.total) }}</td>
+          <td><span class="badge badge-{{ c.estado }}">{{ c.estado|title }}</span></td>
+          <td style="color:var(--text2)">{{ c.fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px">Sin cotizaciones</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

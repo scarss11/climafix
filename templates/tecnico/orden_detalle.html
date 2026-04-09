@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Orden #{{ orden.id }} — Técnico{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="/dashboard" style="color:var(--text2);text-decoration:none;font-size:14px">← Volver</a>
+    <div class="page-title" style="margin-top:4px">Orden #{{ orden.id }}</div>
+  </div>
+  <span class="badge badge-{{ orden.estado }}" style="font-size:14px;padding:8px 16px">
+    {{ orden.estado.replace('_',' ')|title }}
+  </span>
+</div>
+
+<!-- Info -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px">
+  <div class="card-sm">
+    <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Cliente</div>
+    <div style="font-weight:700;margin-top:5px">{{ orden.cliente_nombre or '—' }}</div>
+  </div>
+  <div class="card-sm">
+    <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Equipo</div>
+    <div style="font-weight:700;margin-top:5px">{{ orden.equipo_tipo or '—' }} {{ orden.equipo_marca or '' }} {{ orden.equipo_modelo or '' }}</div>
+  </div>
+  <div class="card-sm">
+    <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Fecha</div>
+    <div style="font-weight:700;margin-top:5px">{{ orden.fecha }}</div>
+  </div>
+</div>
+
+{% if orden.descripcion %}
+<div class="card" style="margin-bottom:20px">
+  <div style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:8px">Trabajo solicitado</div>
+  <p>{{ orden.descripcion }}</p>
+</div>
+{% endif %}
+
+<!-- Historial mantenimientos -->
+<div class="card" style="margin-bottom:20px">
+  <div style="font-size:17px;font-weight:700;margin-bottom:16px">Historial de mantenimientos</div>
+  {% for m in mantenimientos %}
+  <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <span class="badge" style="background:{{ 'rgba(48,209,88,.12);color:#30D158' if m.tipo=='preventivo' else 'rgba(255,59,48,.1);color:#FF3B30' }}">{{ m.tipo|title }}</span>
+      <span style="font-size:12px;color:var(--text2)">{{ m.fecha_ejecucion }}</span>
+    </div>
+    <p style="font-size:14px">{{ m.descripcion or '—' }}</p>
+    {% if m.evidencia_url %}<a href="{{ m.evidencia_url }}" target="_blank" style="font-size:13px;color:var(--blue)">Ver evidencia</a>{% endif %}
+  </div>
+  {% else %}
+  <p style="color:var(--text2);text-align:center;padding:20px 0">Sin registros aún</p>
+  {% endfor %}
+</div>
+
+<!-- Registrar nuevo mantenimiento -->
+{% if orden.estado != 'completada' and orden.estado != 'cancelada' %}
+<div class="card">
+  <div style="font-size:17px;font-weight:700;margin-bottom:18px">Registrar mantenimiento</div>
+  <form method="POST" action="/tecnico/orden/{{ orden.id }}/registrar">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label>Tipo de mantenimiento</label>
+        <select name="tipo" required>
+          <option value="preventivo">Preventivo</option>
+          <option value="correctivo">Correctivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Descripción del trabajo realizado</label><textarea name="descripcion" rows="4" required></textarea></div>
+    <div class="form-group"><label>URL de evidencia fotográfica</label><input name="evidencia_url" placeholder="https://i.imgur.com/..."></div>
+
+    <div style="margin-bottom:12px;font-weight:600;font-size:14px">Repuestos utilizados</div>
+    <div id="repuestos-container">
+      <div class="repuesto-row" style="display:grid;grid-template-columns:1fr 70px;gap:10px;margin-bottom:10px">
+        <select name="repuesto_id">
+          <option value="">Sin repuesto</option>
+          {% for r in repuestos %}
+          <option value="{{ r.id }}">{{ r.nombre }} — ${{ '{:,.0f}'.format(r.costo) }}</option>
+          {% endfor %}
+        </select>
+        <input name="cantidad" type="number" min="1" value="1" placeholder="Cant.">
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addRepuesto()" style="margin-bottom:20px">+ Agregar repuesto</button>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" type="submit">Guardar</button>
+      <button class="btn btn-success" type="submit" name="completar" value="1">Guardar y completar orden</button>
+    </div>
+  </form>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:28px;color:var(--text2)">
+  <p>Esta orden está <strong>{{ orden.estado }}</strong> y no admite más registros.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const container = document.getElementById('repuestos-container');
+const rowHTML = container ? container.querySelector('.repuesto-row').innerHTML : '';
+function addRepuesto(){
+  const div = document.createElement('div');
+  div.className = 'repuesto-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 70px;gap:10px;margin-bottom:10px';
+  div.innerHTML = rowHTML;
+  container.appendChild(div);
+}
+</script>
+{% endblock %}

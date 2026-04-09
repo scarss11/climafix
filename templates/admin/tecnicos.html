@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Técnicos — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Técnicos</div>
+  <button class="btn btn-primary" onclick="openModal('modal-crear')">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    Nuevo técnico
+  </button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Nombre</th><th>Especialidad</th><th>Email</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for t in tecnicos %}
+        <tr>
+          <td style="color:var(--text2);font-weight:600">#{{ t.id }}</td>
+          <td style="font-weight:600">{{ t.nombre }}</td>
+          <td>{{ t.especialidad or '—' }}</td>
+          <td style="color:var(--text2)">{{ t.email or '—' }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm"
+                onclick="openEdit({{ t.id }},'{{ t.nombre|e }}','{{ t.especialidad or ''|e }}')">
+                Editar
+              </button>
+              <form method="POST" action="/admin/tecnicos/{{ t.id }}/eliminar" onsubmit="return confirm('¿Eliminar técnico?')">
+                <button class="btn btn-danger btn-sm">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text2);padding:32px">Sin técnicos registrados</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal-overlay" id="modal-crear">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nuevo técnico</div>
+      <button class="modal-close" onclick="closeModal('modal-crear')">✕</button>
+    </div>
+    <form method="POST" action="/admin/tecnicos/crear">
+      <div class="form-group"><label>Nombre</label><input name="nombre" required></div>
+      <div class="form-group"><label>Especialidad</label><input name="especialidad" placeholder="Ej: Minisplit, VRF, Chiller"></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Editar técnico</div>
+      <button class="modal-close" onclick="closeModal('modal-editar')">✕</button>
+    </div>
+    <form method="POST" id="form-editar">
+      <div class="form-group"><label>Nombre</label><input name="nombre" id="edit-nombre" required></div>
+      <div class="form-group"><label>Especialidad</label><input name="especialidad" id="edit-esp"></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Actualizar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function openEdit(id, nombre, esp){
+  document.getElementById('form-editar').action = '/admin/tecnicos/'+id+'/editar';
+  document.getElementById('edit-nombre').value = nombre;
+  document.getElementById('edit-esp').value = esp;
+  openModal('modal-editar');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }));
+</script>
+{% endblock %}

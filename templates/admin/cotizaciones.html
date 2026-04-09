@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Cotizaciones — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Cotizaciones</div>
+  <button class="btn btn-primary" onclick="openModal('modal-crear')">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    Nueva cotización
+  </button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Cliente</th><th>Orden vinculada</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Notas</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for c in cotizaciones %}
+        <tr>
+          <td style="color:var(--text2);font-weight:600">#{{ c.id }}</td>
+          <td style="font-weight:600">{{ c.cliente_nombre or '—' }}</td>
+          <td style="color:var(--text2)">{{ '#'+c.orden_id|string if c.orden_id else '—' }}</td>
+          <td style="font-weight:700;color:var(--green)">${{ '{:,.0f}'.format(c.total) }}</td>
+          <td><span class="badge badge-{{ c.estado }}">{{ c.estado|title }}</span></td>
+          <td style="color:var(--text2)">{{ c.fecha }}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:13px">{{ c.notas or '—' }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="openEstado({{ c.id }},'{{ c.estado }}')">Estado</button>
+              <form method="POST" action="/admin/cotizaciones/{{ c.id }}/eliminar" onsubmit="return confirm('¿Eliminar cotización?')">
+                <button class="btn btn-danger btn-sm">✕</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:var(--text2);padding:32px">Sin cotizaciones registradas</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal-overlay" id="modal-crear">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">Nueva cotización</div>
+      <button class="modal-close" onclick="closeModal('modal-crear')">✕</button>
+    </div>
+    <form method="POST" action="/admin/cotizaciones/crear">
+      <div class="form-group">
+        <label>Cliente</label>
+        <select name="cliente_id" required>
+          <option value="">Seleccionar cliente...</option>
+          {% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Vincular a orden (opcional)</label>
+        <select name="orden_id">
+          <option value="">Sin orden vinculada</option>
+          {% for o in ordenes %}<option value="{{ o.id }}">#{{ o.id }} — {{ o.cliente_nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Total (COP)</label>
+        <input name="total" type="number" min="0" step="1000" placeholder="150000" required>
+      </div>
+      <div class="form-group"><label>Notas / descripción</label><textarea name="notas" rows="3" placeholder="Descripción de servicios incluidos..."></textarea></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Crear cotización</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Estado -->
+<div class="modal-overlay" id="modal-estado">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">Cambiar estado</div>
+      <button class="modal-close" onclick="closeModal('modal-estado')">✕</button>
+    </div>
+    <form method="POST" id="form-estado">
+      <div class="form-group">
+        <label>Estado</label>
+        <select name="estado" id="sel-estado">
+          <option value="borrador">Borrador</option>
+          <option value="enviada">Enviada</option>
+          <option value="aprobada">Aprobada</option>
+          <option value="rechazada">Rechazada</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Actualizar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function openEstado(id, estado){
+  document.getElementById('form-estado').action = '/admin/cotizaciones/'+id+'/estado';
+  document.getElementById('sel-estado').value = estado;
+  openModal('modal-estado');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }));
+</script>
+{% endblock %}

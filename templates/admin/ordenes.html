@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Órdenes de Trabajo — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Órdenes de Trabajo</div>
+  <button class="btn btn-primary" onclick="openModal('modal-crear')">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    Nueva orden
+  </button>
+</div>
+
+<!-- Filtro rápido por estado -->
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+  <button class="btn btn-ghost btn-sm filter-btn active" data-estado="todos">Todos</button>
+  <button class="btn btn-sm filter-btn" style="background:rgba(255,159,10,.12);color:#FF9F0A" data-estado="pendiente">Pendiente</button>
+  <button class="btn btn-sm filter-btn" style="background:rgba(10,132,255,.12);color:#0A84FF" data-estado="en_proceso">En proceso</button>
+  <button class="btn btn-sm filter-btn" style="background:rgba(48,209,88,.12);color:#30D158" data-estado="completada">Completada</button>
+  <button class="btn btn-sm filter-btn" style="background:rgba(255,59,48,.12);color:#FF3B30" data-estado="cancelada">Cancelada</button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table id="tabla-ordenes">
+      <thead>
+        <tr><th>#</th><th>Cliente</th><th>Técnico</th><th>Equipo</th><th>Descripción</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for o in ordenes %}
+        <tr class="fila-orden" data-estado="{{ o.estado }}">
+          <td style="color:var(--text2);font-weight:600">#{{ o.id }}</td>
+          <td style="font-weight:500">{{ o.cliente_nombre or '—' }}</td>
+          <td>{{ o.tecnico_nombre or '<span style="color:var(--text2)">Sin asignar</span>'|safe }}</td>
+          <td style="font-size:13px">{{ o.equipo_tipo or '' }} {{ o.equipo_marca or '' }}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">{{ o.descripcion or '—' }}</td>
+          <td><span class="badge badge-{{ o.estado }}">{{ o.estado.replace('_',' ')|title }}</span></td>
+          <td style="color:var(--text2);font-size:13px">{{ o.fecha }}</td>
+          <td>
+            <div style="display:flex;gap:6px;align-items:center">
+              <a href="/admin/ordenes/{{ o.id }}" class="btn btn-ghost btn-sm">Ver</a>
+              <button class="btn btn-ghost btn-sm"
+                onclick="openEstado({{ o.id }},'{{ o.estado }}')">Estado</button>
+              <form method="POST" action="/admin/ordenes/{{ o.id }}/eliminar" onsubmit="return confirm('¿Eliminar orden?')">
+                <button class="btn btn-danger btn-sm">✕</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:var(--text2);padding:32px">Sin órdenes registradas</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear Orden -->
+<div class="modal-overlay" id="modal-crear">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Nueva orden de trabajo</div>
+      <button class="modal-close" onclick="closeModal('modal-crear')">✕</button>
+    </div>
+    <form method="POST" action="/admin/ordenes/crear">
+      <div class="form-group">
+        <label>Cliente</label>
+        <select name="cliente_id" required id="sel-cliente" onchange="filtrarEquipos()">
+          <option value="">Seleccionar cliente...</option>
+          {% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Técnico asignado</label>
+        <select name="tecnico_id" required>
+          <option value="">Seleccionar técnico...</option>
+          {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.nombre }} — {{ t.especialidad or '' }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Equipo</label>
+        <select name="equipo_id" required>
+          <option value="">Seleccionar equipo...</option>
+          {% for e in equipos %}<option value="{{ e.id }}" data-cliente="{{ e.cliente_id }}">{{ e.tipo }} {{ e.marca }} {{ e.modelo }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label>Descripción del trabajo</label><textarea name="descripcion" placeholder="Describe el trabajo a realizar..."></textarea></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Crear orden</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Cambiar Estado -->
+<div class="modal-overlay" id="modal-estado">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">Cambiar estado</div>
+      <button class="modal-close" onclick="closeModal('modal-estado')">✕</button>
+    </div>
+    <form method="POST" id="form-estado">
+      <div class="form-group">
+        <label>Nuevo estado</label>
+        <select name="estado" id="sel-estado">
+          <option value="pendiente">Pendiente</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="completada">Completada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Actualizar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function openEstado(id, estado){
+  document.getElementById('form-estado').action = '/admin/ordenes/'+id+'/estado';
+  document.getElementById('sel-estado').value = estado;
+  openModal('modal-estado');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }));
+
+// Filtro por estado
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const est = btn.dataset.estado;
+    document.querySelectorAll('.fila-orden').forEach(row => {
+      row.style.display = (est === 'todos' || row.dataset.estado === est) ? '' : 'none';
+    });
+  });
+});
+</script>
+{% endblock %}

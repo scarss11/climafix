@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Mi Panel — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Mi Panel</div>
+    <p style="color:var(--text2);font-size:14px;margin-top:4px">Bienvenido, {{ cliente.nombre if cliente else session.nombre }}</p>
+  </div>
+  {% if equipos %}
+  <button class="btn btn-primary" onclick="openModal('modal-solicitar')">
+    Solicitar servicio
+  </button>
+  {% endif %}
+</div>
+
+<!-- Stats rápidas -->
+<div class="stats-grid" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--orange)">{{ ordenes|selectattr('estado','equalto','pendiente')|list|length }}</div>
+    <div class="stat-label">Solicitudes pendientes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--blue)">{{ ordenes|selectattr('estado','equalto','en_proceso')|list|length }}</div>
+    <div class="stat-label">En proceso</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--green)">{{ ordenes|selectattr('estado','equalto','completada')|list|length }}</div>
+    <div class="stat-label">Completadas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--blue)">{{ equipos|length }}</div>
+    <div class="stat-label">Mis equipos</div>
+  </div>
+</div>
+
+<!-- Mis órdenes -->
+<div class="card" style="margin-bottom:24px">
+  <div style="font-size:17px;font-weight:700;margin-bottom:16px">Mis solicitudes de servicio</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Equipo</th><th>Técnico</th><th>Estado</th><th>Fecha</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        {% for o in ordenes %}
+        <tr>
+          <td style="color:var(--text2);font-weight:600">#{{ o.id }}</td>
+          <td>{{ o.equipo_tipo or '—' }} {{ o.equipo_marca or '' }}</td>
+          <td>{{ o.tecnico_nombre or 'Por asignar' }}</td>
+          <td><span class="badge badge-{{ o.estado }}">{{ o.estado.replace('_',' ')|title }}</span></td>
+          <td style="color:var(--text2)">{{ o.fecha }}</td>
+          <td style="color:var(--text2);font-size:13px">{{ o.descripcion or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">Sin solicitudes registradas</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Cotizaciones -->
+{% if cotizaciones %}
+<div class="card" style="margin-bottom:24px">
+  <div style="font-size:17px;font-weight:700;margin-bottom:16px">Mis cotizaciones</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Notas</th></tr></thead>
+      <tbody>
+        {% for c in cotizaciones %}
+        <tr>
+          <td style="color:var(--text2);font-weight:600">#{{ c.id }}</td>
+          <td style="color:var(--text2)">{{ c.fecha }}</td>
+          <td style="font-weight:700;color:var(--green)">${{ '{:,.0f}'.format(c.total) }}</td>
+          <td><span class="badge badge-{{ c.estado }}">{{ c.estado|title }}</span></td>
+          <td style="color:var(--text2);font-size:13px">{{ c.notas or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Mis equipos -->
+<div class="card">
+  <div style="font-size:17px;font-weight:700;margin-bottom:16px">Mis equipos registrados</div>
+  {% if equipos %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+    {% for e in equipos %}
+    <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px">
+      <div style="font-weight:700;margin-bottom:4px">{{ e.tipo }}</div>
+      <div style="font-size:13px;color:var(--text2)">{{ e.marca or '' }} {{ e.modelo or '' }}</div>
+      {% if e.numero_serie %}<div style="font-size:12px;color:var(--text2);margin-top:4px;font-family:monospace">S/N: {{ e.numero_serie }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--text2);text-align:center;padding:20px">No tienes equipos registrados. Contacta al administrador.</p>
+  {% endif %}
+</div>
+
+<!-- Modal solicitar servicio -->
+<div class="modal-overlay" id="modal-solicitar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Solicitar servicio</div>
+      <button class="modal-close" onclick="closeModal('modal-solicitar')">✕</button>
+    </div>
+    <form method="POST" action="/cliente/solicitar">
+      <div class="form-group">
+        <label>Equipo con problema</label>
+        <select name="equipo_id" required>
+          <option value="">Seleccionar equipo...</option>
+          {% for e in equipos %}
+          <option value="{{ e.id }}">{{ e.tipo }} {{ e.marca }} {{ e.modelo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descripción del problema</label>
+        <textarea name="descripcion" rows="4" required placeholder="Describe el problema o servicio que necesitas..."></textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Enviar solicitud</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }));
+</script>
+{% endblock %}

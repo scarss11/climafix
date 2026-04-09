@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Equipos — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Equipos de Climatización</div>
+  <button class="btn btn-primary" onclick="openModal('modal-crear')">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    Nuevo equipo
+  </button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Tipo</th><th>Marca / Modelo</th><th>N° Serie</th><th>Cliente</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for e in equipos %}
+        <tr>
+          <td style="color:var(--text2);font-weight:600">#{{ e.id }}</td>
+          <td><span class="badge" style="background:rgba(10,132,255,.1);color:var(--blue)">{{ e.tipo }}</span></td>
+          <td style="font-weight:600">{{ e.marca or '' }} {{ e.modelo or '' }}</td>
+          <td style="color:var(--text2);font-family:monospace;font-size:13px">{{ e.numero_serie or '—' }}</td>
+          <td>{{ e.cliente_nombre or '—' }}</td>
+          <td>
+            <form method="POST" action="/admin/equipos/{{ e.id }}/eliminar" onsubmit="return confirm('¿Eliminar equipo?')">
+              <button class="btn btn-danger btn-sm">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">Sin equipos registrados</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal-overlay" id="modal-crear">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nuevo equipo</div>
+      <button class="modal-close" onclick="closeModal('modal-crear')">✕</button>
+    </div>
+    <form method="POST" action="/admin/equipos/crear">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select name="tipo" required>
+          <option value="">Seleccionar...</option>
+          <option>Minisplit</option>
+          <option>VRF</option>
+          <option>Chiller</option>
+          <option>Torre de enfriamiento</option>
+          <option>Manejadora de aire</option>
+          <option>Fan Coil</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Marca</label><input name="marca" placeholder="LG, Carrier, Daikin..."></div>
+        <div class="form-group"><label>Modelo</label><input name="modelo"></div>
+      </div>
+      <div class="form-group"><label>Número de serie</label><input name="numero_serie"></div>
+      <div class="form-group">
+        <label>Cliente propietario</label>
+        <select name="cliente_id" required>
+          <option value="">Seleccionar cliente...</option>
+          {% for c in clientes %}
+          <option value="{{ c.id }}">{{ c.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Guardar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }));
+</script>
+{% endblock %}

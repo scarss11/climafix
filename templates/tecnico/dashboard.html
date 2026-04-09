@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Mis Órdenes — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Mis Órdenes Asignadas</div>
+    <p style="color:var(--text2);font-size:14px;margin-top:4px">
+      Técnico: <strong>{{ tecnico.nombre if tecnico else session.nombre }}</strong>
+      {% if tecnico %} — {{ tecnico.especialidad or '' }}{% endif %}
+    </p>
+  </div>
+</div>
+
+{% if not tecnico %}
+<div class="card" style="text-align:center;padding:48px;color:var(--text2)">
+  <p style="font-size:16px">Tu cuenta no tiene un perfil de técnico asociado.</p>
+  <p style="font-size:14px;margin-top:8px">Contacta al administrador para configurarlo.</p>
+</div>
+{% elif not ordenes %}
+<div class="card" style="text-align:center;padding:48px;color:var(--text2)">
+  <svg width="48" height="48" fill="none" viewBox="0 0 24 24" style="margin:0 auto 16px;display:block;opacity:.4">
+    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <p style="font-size:16px">No tienes órdenes asignadas</p>
+</div>
+{% else %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+  {% for o in ordenes %}
+  <div class="card" style="padding:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <span style="font-weight:700;font-size:15px">Orden #{{ o.id }}</span>
+      <span class="badge badge-{{ o.estado }}">{{ o.estado.replace('_',' ')|title }}</span>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px">
+      <strong>Cliente:</strong> {{ o.cliente_nombre or '—' }}
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px">
+      <strong>Equipo:</strong> {{ o.equipo_tipo or '—' }} {{ o.equipo_marca or '' }}
+    </div>
+    {% if o.descripcion %}
+    <div style="font-size:13px;color:var(--text2);margin-bottom:14px;border-top:1px solid var(--border);padding-top:10px;margin-top:10px">
+      {{ o.descripcion }}
+    </div>
+    {% endif %}
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <a href="/tecnico/orden/{{ o.id }}" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">
+        Registrar mantenimiento
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

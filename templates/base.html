@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}ClimaFix{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:    #0A84FF;
+  --green:   #30D158;
+  --red:     #FF3B30;
+  --orange:  #FF9F0A;
+  --purple:  #BF5AF2;
+  --bg:      #F2F2F7;
+  --surface: #FFFFFF;
+  --sidebar: #1C1C1E;
+  --text:    #1C1C1E;
+  --text2:   #6E6E73;
+  --border:  rgba(0,0,0,0.08);
+  --shadow:  0 4px 24px rgba(0,0,0,0.08);
+  --radius:  16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── Layout ── */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--sidebar);padding:24px 16px;display:flex;flex-direction:column;gap:4px;position:fixed;top:0;left:0;bottom:0;overflow-y:auto}
+.main{margin-left:240px;padding:32px;flex:1;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:20px}
+.sidebar-logo svg{color:#0A84FF}
+.sidebar-logo span{font-size:20px;font-weight:700;color:#fff}
+.nav-section{font-size:11px;font-weight:600;color:#636366;letter-spacing:.08em;text-transform:uppercase;padding:16px 12px 6px}
+.nav-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#AEAEB2;text-decoration:none;font-size:14px;font-weight:500;transition:all .15s}
+.nav-link:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-link.active{background:rgba(10,132,255,.18);color:#0A84FF}
+.nav-link svg{width:18px;height:18px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
+.user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:#636366;text-transform:capitalize}
+
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+.card-sm{background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+
+/* ── Stats ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.stat-num{font-size:32px;font-weight:800;line-height:1}
+.stat-label{font-size:13px;color:var(--text2);margin-top:4px;font-weight:500}
+
+/* ── Tabla ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,0,0,.02)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-pendiente{background:rgba(255,159,10,.12);color:#FF9F0A}
+.badge-en_proceso{background:rgba(10,132,255,.12);color:#0A84FF}
+.badge-completada{background:rgba(48,209,88,.12);color:#30D158}
+.badge-cancelada{background:rgba(255,59,48,.12);color:#FF3B30}
+.badge-borrador{background:rgba(142,142,147,.12);color:#8E8E93}
+.badge-enviada{background:rgba(10,132,255,.12);color:#0A84FF}
+.badge-aprobada{background:rgba(48,209,88,.12);color:#30D158}
+.badge-rechazada{background:rgba(255,59,48,.12);color:#FF3B30}
+
+/* ── Botones ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#0070E0}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}
+.btn-ghost{background:rgba(0,0,0,.05);color:var(--text)}
+.btn-ghost:hover{background:rgba(0,0,0,.09)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+
+/* ── Forms ── */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+label{font-size:13px;font-weight:600;color:var(--text2)}
+input,select,textarea{padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:80px}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:20px;padding:28px;width:100%;max-width:480px;box-shadow:0 24px 60px rgba(0,0,0,.18);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{background:rgba(0,0,0,.06);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text2)}
+
+/* ── Flash ── */
+.flash{padding:12px 16px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:500}
+.flash-ok{background:rgba(48,209,88,.12);color:#1a7a3a;border:1px solid rgba(48,209,88,.2)}
+.flash-error{background:rgba(255,59,48,.1);color:#c0392b;border:1px solid rgba(255,59,48,.2)}
+
+/* ── Page header ── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-size:26px;font-weight:800}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:20px}
+}
+</style>
+{% block extra_styles %}{% endblock %}
+</head>
+<body>
+{% if session.user_id %}
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>ClimaFix</span>
+    </div>
+
+    {% if session.rol == 'admin' %}
+    <span class="nav-section">Administración</span>
+    <a href="/dashboard" class="nav-link {% if request.path=='/dashboard' %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+      Dashboard
+    </a>
+    <a href="/admin/ordenes" class="nav-link {% if '/admin/ordenes' in request.path %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Órdenes
+    </a>
+    <a href="/admin/clientes" class="nav-link {% if '/admin/clientes' in request.path %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Clientes
+    </a>
+    <a href="/admin/tecnicos" class="nav-link {% if '/admin/tecnicos' in request.path %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.3L4 17l1-2.3a1 1 0 01.3-.4l8-8a1 1 0 011.4 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15.5 5.5L18.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Técnicos
+    </a>
+    <a href="/admin/equipos" class="nav-link {% if '/admin/equipos' in request.path %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Equipos
+    </a>
+    <a href="/admin/cotizaciones" class="nav-link {% if '/admin/cotizaciones' in request.path %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Cotizaciones
+    </a>
+
+    {% elif session.rol == 'tecnico' %}
+    <span class="nav-section">Técnico</span>
+    <a href="/dashboard" class="nav-link {% if request.path=='/dashboard' %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+      Mis Órdenes
+    </a>
+
+    {% else %}
+    <span class="nav-section">Cliente</span>
+    <a href="/dashboard" class="nav-link {% if request.path=='/dashboard' %}active{% endif %}">
+      <svg fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+      Mi Panel
+    </a>
+    {% endif %}
+
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar">{{ session.nombre[0]|upper }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ session.nombre }}</div>
+          <div class="user-role">{{ session.rol }}</div>
+        </div>
+      </div>
+      <a href="/logout" class="nav-link" style="margin-top:4px;color:#FF3B30">
+        <svg fill="none" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Cerrar sesión
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash flash-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

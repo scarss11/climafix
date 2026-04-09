@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Orden #{{ orden.id }} — ClimaFix{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="/admin/ordenes" style="color:var(--text2);text-decoration:none;font-size:14px">← Volver a órdenes</a>
+    <div class="page-title" style="margin-top:4px">Orden #{{ orden.id }}</div>
+  </div>
+  <span class="badge badge-{{ orden.estado }}" style="font-size:14px;padding:8px 16px">
+    {{ orden.estado.replace('_',' ')|title }}
+  </span>
+</div>
+
+<!-- Info de la orden -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px">
+  <div class="card-sm">
+    <div style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Cliente</div>
+    <div style="font-size:16px;font-weight:700;margin-top:6px">{{ orden.cliente_nombre or '—' }}</div>
+  </div>
+  <div class="card-sm">
+    <div style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Técnico</div>
+    <div style="font-size:16px;font-weight:700;margin-top:6px">{{ orden.tecnico_nombre or 'Sin asignar' }}</div>
+  </div>
+  <div class="card-sm">
+    <div style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Equipo</div>
+    <div style="font-size:16px;font-weight:700;margin-top:6px">{{ orden.equipo_tipo or '—' }} {{ orden.equipo_marca or '' }} {{ orden.equipo_modelo or '' }}</div>
+  </div>
+  <div class="card-sm">
+    <div style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Fecha</div>
+    <div style="font-size:16px;font-weight:700;margin-top:6px">{{ orden.fecha }}</div>
+  </div>
+</div>
+
+{% if orden.descripcion %}
+<div class="card" style="margin-bottom:24px">
+  <div style="font-weight:600;margin-bottom:8px;color:var(--text2);font-size:13px;text-transform:uppercase;letter-spacing:.06em">Descripción</div>
+  <p>{{ orden.descripcion }}</p>
+</div>
+{% endif %}
+
+<!-- Mantenimientos registrados -->
+<div class="card" style="margin-bottom:24px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="font-size:17px;font-weight:700">Mantenimientos registrados</div>
+  </div>
+  {% if mantenimientos %}
+    {% for m in mantenimientos %}
+    <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="badge" style="background:{{ 'rgba(48,209,88,.12);color:#30D158' if m.tipo=='preventivo' else 'rgba(255,59,48,.1);color:#FF3B30' }}">
+          {{ m.tipo|title }}
+        </span>
+        <span style="font-size:12px;color:var(--text2)">{{ m.fecha_ejecucion }}</span>
+      </div>
+      <p style="font-size:14px;margin-bottom:8px">{{ m.descripcion or '—' }}</p>
+      {% if m.evidencia_url %}
+      <a href="{{ m.evidencia_url }}" target="_blank" style="font-size:13px;color:var(--blue)">Ver evidencia</a>
+      {% endif %}
+      {% if m.repuestos and m.repuestos != '[]' %}
+      <div style="margin-top:10px;font-size:13px;color:var(--text2)">
+        <strong>Repuestos:</strong>
+        {% for r in m.repuestos %}
+          {{ r.nombre }} x{{ r.cantidad }} (${{ '{:,.0f}'.format(r.costo * r.cantidad) }}){% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <p style="color:var(--text2);text-align:center;padding:24px 0">Sin mantenimientos registrados aún</p>
+  {% endif %}
+</div>
+
+<!-- Formulario para registrar mantenimiento (admin también puede) -->
+<div class="card">
+  <div style="font-size:17px;font-weight:700;margin-bottom:18px">Registrar mantenimiento</div>
+  <form method="POST" action="/tecnico/orden/{{ orden.id }}/registrar">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select name="tipo" required>
+          <option value="preventivo">Preventivo</option>
+          <option value="correctivo">Correctivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Descripción del trabajo realizado</label><textarea name="descripcion" rows="3"></textarea></div>
+    <div class="form-group"><label>URL de evidencia (imagen)</label><input name="evidencia_url" placeholder="https://..."></div>
+
+    <div style="font-weight:600;font-size:14px;margin-bottom:12px;margin-top:4px">Repuestos utilizados</div>
+    <div id="repuestos-container">
+      <div class="repuesto-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:8px">
+        <select name="repuesto_id">
+          <option value="">Sin repuesto</option>
+          {% for r in repuestos %}
+          <option value="{{ r.id }}">{{ r.nombre }} — ${{ '{:,.0f}'.format(r.costo) }}</option>
+          {% endfor %}
+        </select>
+        <input name="cantidad" type="number" min="1" value="1" style="width:70px">
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addRepuesto()" style="margin-bottom:16px">+ Agregar repuesto</button>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" type="submit">Guardar mantenimiento</button>
+      <button class="btn btn-success" type="submit" name="completar" value="1">Guardar y marcar como completada</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const repuestosContainer = document.getElementById('repuestos-container');
+const repuestosHTML = repuestosContainer.querySelector('.repuesto-row').innerHTML;
+
+function addRepuesto(){
+  const div = document.createElement('div');
+  div.className = 'repuesto-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:8px';
+  div.innerHTML = repuestosHTML;
+  repuestosContainer.appendChild(div);
+}
+</script>
+{% endblock %}
